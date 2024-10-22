@@ -1,67 +1,70 @@
 <template>
-  <div class="container mt-5 login-form">
-    <div class="card p-4 shadow-sm">
-      <h2 class="text-center mb-4">
-        Добро пожаловать на <strong>Fluxy</strong>
+  <div class="flex justify-center items-center min-h-screen bg-gray-100">
+    <div class="w-full max-w-md bg-white shadow-lg rounded-lg p-6">
+      <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">
+        Добро пожаловать на <span class="text-blue-500">Fluxy</span>
       </h2>
-      
+
       <form @submit.prevent="isRegistering ? register() : login()">
-        <div class="mb-3">
+        <div class="mb-4">
           <input 
-            type="text" 
+            type="email" 
             v-model="email" 
-            class="form-control" 
+            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
             id="email" 
             required 
             placeholder="E-Mail"
           />
         </div>
-        <div class="mb-3" v-if="isRegistering">
+        
+        <div class="mb-4" v-if="isRegistering">
           <input 
             type="text" 
             v-model="name" 
-            class="form-control" 
+            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
             id="name" 
             required 
             placeholder="Имя"
           />
         </div>
-        <div class="mb-3">
+        
+        <div class="mb-4">
           <input 
             type="password" 
             v-model="password" 
-            class="form-control" 
+            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
             id="password" 
             required 
             placeholder="Пароль"
           />
         </div>
-        <div class="mb-3" v-if="isRegistering">
+        
+        <div class="mb-4" v-if="isRegistering">
           <input 
             type="password" 
             v-model="confirmPassword" 
-            class="form-control" 
+            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
             id="confirmPassword" 
             required 
             placeholder="Подтвердите пароль"
           />
         </div>
-        <button type="submit" class="btn btn-primary w-100 mb-3">
+
+        <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors duration-300">
           {{ isRegistering ? 'Зарегистрироваться' : 'Войти' }}
         </button>
       </form>
 
-      <div class="text-center">
+      <div class="text-center mt-4">
         <span v-if="!isRegistering">Нет аккаунта? </span>
         <span v-if="isRegistering">Уже есть аккаунт? </span>
-        <a href="#" class="text-decoration-none text-secondary text-center d-inline-block mt-3" 
-           @click.prevent="toggleForm"
-           style="transition: color 0.3s ease-in-out;"> 
-          <strong class="register-link">{{ isRegistering ? 'Войти' : 'Зарегистрироваться' }}</strong>
+        <a href="#" class="text-blue-500 hover:text-blue-600 transition-colors duration-300 font-semibold"
+           @click.prevent="toggleForm"> 
+          {{ isRegistering ? 'Войти' : 'Зарегистрироваться' }}
         </a>
       </div>
 
-      <AlertForm v-if="error" :message="error" :type="errorType" />
+      <AlertForm v-if="error" :message="error" :type="errorType" class="mt-4" />
     </div>
   </div>
 </template>
@@ -125,8 +128,9 @@ export default {
         if (response.ok) {
           localStorage.setItem('token', data.token);
           const decodedToken = jwtDecode(data.token);
+          localStorage.setItem('name', data.name);
+          localStorage.setItem('id', decodedToken.id);
           const role = decodedToken.role;
-          console.log("Token is " +  data.token);
           if (role == 'admin') {
             this.$router.push({ name: 'admin' });
           } else if (role == 'seller') {
@@ -160,11 +164,14 @@ export default {
         });
 
         const data = await response.json();
+        const decodedToken = jwtDecode(data.token);
         this.errorType = data.errorType;
 
         if (response.ok) {
           this.$router.push({ name: 'seller' });
           localStorage.setItem('token', data.token);
+          localStorage.setItem('name', this.name);
+          localStorage.setItem('id', decodedToken.id);
           this.isRegistering = false;
           this.email = '';
           this.name = '';

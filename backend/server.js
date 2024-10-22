@@ -5,7 +5,8 @@ const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const shiftRoutes = require('./routes/shifts');
 const storeRoutes = require('./routes/stores');
-const sellerRoutes = require('./routes/sellers'); // Импорт маршрутов для продавцов
+const sellerRoutes = require('./routes/sellers');
+const usersRoutes = require('./routes/users');
 const initConfig = require('./config/settings');
 
 const app = express();
@@ -30,7 +31,8 @@ mongoose.connect(mongoURI)
 app.use('/api/auth', authRoutes);
 app.use('/api/shifts', shiftRoutes);
 app.use('/api/stores', storeRoutes);
-app.use('/api/sellers', sellerRoutes); // Добавьте маршрут для продавцов
+app.use('/api/sellers', sellerRoutes);
+app.use('/api/users', usersRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

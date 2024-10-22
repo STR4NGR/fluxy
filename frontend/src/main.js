@@ -2,6 +2,15 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import store from './store'
-import 'bootstrap/dist/css/bootstrap.min.css';
+import './assets/main.css';
+import { loadFonts } from './plugins/webfontloader'
+import { createVuetify } from 'vuetify';
+import 'vuetify/styles'; // Импорт стилей Vuetify
 
-createApp(App).use(store).use(router).mount('#app')
+loadFonts()
+
+createApp(App)
+  .use(router)
+  .use(store)
+  .use(createVuetify())
+  .mount('#app')

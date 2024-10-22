@@ -15,8 +15,9 @@ router.post('/', async (req, res) => {
 
 // Получение всех продавцов
 router.get('/', async (req, res) => {
+  const userId = req.query.userId;
   try {
-    const sellers = await Seller.find({});
+    const sellers = await Seller.find({ userID: userId });
     res.json(sellers);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -33,12 +34,41 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Удаление смены
+// Обновление цвета расписания
+router.put('/:id/color', async (req, res) => {
+  const { id } = req.params;
+  const { date, color } = req.body;
+
+  try {
+    const seller = await Seller.findById(id);
+    if (!seller) {
+      return res.status(404).send('Seller not found');
+    }
+
+    const shift = seller.schedule.find(s => s.date === date);
+    if (shift) {
+      shift.color = color;
+    } else {
+      seller.schedule.push({ date, color });
+    }
+
+    await seller.save();
+    res.send(seller);
+  } catch (error) {
+    res.status(500).send('Error updating seller color');
+  }
+});
+
+// Удаление продавца
 router.delete('/:id', async (req, res) => {
   try {
-    await Seller.findByIdAndRemove(req.params.id);
+    const seller = await Seller.findByIdAndDelete(req.params.id);
+    if (!seller) {
+      return res.status(404).json({ message: 'Продавец не найден' });
+    }
     res.status(204).send();
   } catch (error) {
+    console.error('Backend: Ошибка при удалении продавца:', error);
     res.status(500).json({ message: error.message });
   }
 });
