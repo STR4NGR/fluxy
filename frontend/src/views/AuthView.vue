@@ -55,6 +55,15 @@
         </button>
       </form>
 
+      <div class="text-center mt-4">
+        <span v-if="!isRegistering">Нет аккаунта? </span>
+        <span v-if="isRegistering">Уже есть аккаунт? </span>
+        <a href="#" class="text-blue-500 hover:text-blue-600 transition-colors duration-300 font-semibold"
+           @click.prevent="toggleForm"> 
+          {{ isRegistering ? 'Войти' : 'Зарегистрироваться' }}
+        </a>
+      </div>
+
       <AlertForm v-if="error" :message="error" :type="errorType" class="mt-4" />
     </div>
   </div>
