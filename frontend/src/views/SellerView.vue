@@ -141,7 +141,7 @@
               :class="getDayClass(day)"
               class="border border-gray-300 py-2"
               style="width: 100px;">
-              {{ day.getDate() }}<br>({{ day.toLocaleDateString('ru-RU', { weekday: 'short' }) }})
+              {{ day.getDate() }}<br>({{ day.toLocaleDateString('ru-RU', { weekday: 'short' }) }})<br>{{ calculateTotalHoursForDay(day) }}
             </th>
           </tr>
         </thead>
@@ -290,7 +290,7 @@
     </v-container>
   
     <v-container>
-      <v-dialog v-model="isShiftTimeModalOpen" persistent max-width="420px">
+      <v-dialog v-model="isShiftTimeModalOpen" persistent max-width="500px">
         <v-card>
           <v-card-title>Установить время смены</v-card-title>
           <v-card-text>
@@ -345,12 +345,12 @@
               </v-col>
             </v-row>
           </v-card-text>
-          <v-btn v-if="isAdmin" color="primary" @click="savePreShift('clear')">Очистить</v-btn>
+          <v-btn v-if="isAdmin" color="primary" @click="saveShift('clear')">Очистить</v-btn>
           <v-card-actions>
-            <v-btn v-if="!isShiftExist" color="red" @click="savePreShift('holiday')">Отдыхаю</v-btn>
-            <v-btn v-if="!isShiftExist" color="green" @click="savePreShift('workday')">Работаю</v-btn>
+            <v-btn v-if="!isShiftExist" color="red" @click="saveShift('holiday', null, null)">Отдыхаю</v-btn>
+            <v-btn v-if="!isShiftExist" color="green" @click="saveShift('workday', null, null)">Работаю</v-btn>
             <v-btn @click="closeShiftTimeModal">Отмена</v-btn>
-            <v-btn color="primary" @click="saveShift">Сохранить</v-btn>
+            <v-btn color="primary" @click="saveShift('workday', shiftStart.hours, shiftEnd.hours)">Подтвердить время</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -364,7 +364,7 @@
   import { ref, onMounted, watch } from 'vue';
   import { computed } from 'vue';
   import { useRouter } from 'vue-router';
-  import axios from 'axios';
+  import axios from 'axios';      
   
   const router = useRouter();
   
@@ -500,79 +500,130 @@
          (seller.result?.received25to27 ?? 0) +
          (seller.result?.receivedYaMarket ?? 0) +
          (seller.result?.receivedOzonMarket ?? 0);
-};
+        };
 
-  // Сохранение предварительной смены
-  const savePreShift = (dayType) => {
+  const saveShift = (dayType, startShift, endShift) => {
     if (selectedDay.value && selectedSellerIndex.value !== null) {
-  
-      const formattedDate = selectedDay.value.toLocaleDateString('en-CA'); // Используем формат "YYYY-MM-DD"
-      const preshift = { date: formattedDate, preshift: dayType };
-
-      // Получаем текущего продавца
+      const formattedDate = selectedDay.value.toLocaleDateString('en-CA');
       const seller = sellers.value[selectedSellerIndex];
-      if (!seller) {
-      console.error('Продавец не найден по данному индексу:', selectedSellerIndex);
-      return;
-    }
 
+      if (!seller) {
+        console.error('Продавец не найден по данному индексу:', selectedSellerIndex);
+        return;     
+      }
+
+      let sellerSoloDay = sellers.value.filter(seller => 
+        seller.schedule.some(
+          shift => shift.date === formattedDate && 
+            (shift.preshift === 'soloday'))).length;
+      
+      let sellerWorkDay = sellers.value.filter(seller => 
+        seller.schedule.some(
+          shift => shift.date === formattedDate && 
+            (shift.preshift === 'workday'))).length;
+
+      const currentShift = seller.schedule.find(s => s.date === formattedDate);
       const existingShiftIndex = seller.schedule.findIndex(s => s.date === formattedDate);
 
-      // Проверяем количество продавцов с записями на выбранный день
-      const sellerSoloDay = sellers.value.filter(seller =>
-      seller.schedule.some(shift => shift.date === formattedDate && (shift.preshift === 'soloday'))
-    ).length;
-
-    const sellerWorkDay = sellers.value.filter(seller =>
-      seller.schedule.some(shift => shift.date === formattedDate && (shift.preshift === 'workday'))
-    ).length;
-
-    const currentShift = seller.schedule.find(s => s.date === formattedDate);
+      const shift = { date: formattedDate,   
+        preshift: dayType};
 
       switch (dayType) {
         case 'holiday':
           if (sellerWorkDay == 2) {
             if ((currentShift) && (currentShift.preshift === 'workday')) {
-              updateCalendarShifts('workday', 'soloday');
-            }            
+                delete shift.shiftStart;
+                delete shift.shiftEnd;
+                shift.preshift = 'holiday';
+                updateCalendarShifts('workday', 'soloday');
+            } 
           }
           break;
-        case 'workday':
-        if (sellerWorkDay < 1) {
-          if ((sellerSoloDay >= 1)) {
-            if ((currentShift) && (currentShift.preshift === 'soloday')) {
-              preshift.preshift = 'soloday';
+          case 'workday':
+            if (sellerWorkDay < 1) {
+              if ((sellerSoloDay >= 1)) {
+                if ((currentShift) && (currentShift.preshift === 'soloday')) {
+                  if ((startShift === null) && (endShift === null)) {
+                    delete shift.shiftStart;
+                    delete shift.shiftEnd;
+                    shift.preshift = 'soloday';
+                  } else if ((startShift !== null) && (endShift !== null)) {
+                    shift.shiftStart = startShift;
+                    shift.shiftEnd = endShift;
+                    shift.preshift = 'soloday'   
+                  }
+                } else {
+                  if ((startShift === null) && (endShift === null)) {
+                    delete shift.shiftStart;
+                    delete shift.shiftEnd;
+                    shift.preshift = 'workday';
+                  } else if ((startShift !== null) && (endShift !== null)) {
+                    shift.shiftStart = startShift;
+                    shift.shiftEnd = endShift;
+                    shift.preshift = 'workday'   
+                  }
+                updateCalendarShifts('soloday', 'workday');
+                }
+              } else {
+                if ((startShift === null) && (endShift === null)) {
+                  delete shift.shiftStart;
+                  delete shift.shiftEnd;
+                  shift.preshift = 'soloday';
+                  } else if ((startShift !== null) && (endShift !== null)) {
+                    shift.shiftStart = startShift;
+                    shift.shiftEnd = endShift;
+                    shift.preshift = 'soloday'
+                  }
+              }
             } else {
-              updateCalendarShifts('soloday', 'workday');         
+              if ((startShift === null) && (endShift === null)) {
+                delete shift.shiftStart;
+                delete shift.shiftEnd;
+                shift.preshift = 'workday';
+              } else if ((startShift !== null) && (endShift !== null)) {
+                shift.shiftStart = startShift;
+                shift.shiftEnd = endShift;
+                shift.preshift = 'workday'   
+              }
             }
-          } else {
-            preshift.preshift = 'soloday';
+            break;
+            case 'clear':
+              if (sellerWorkDay == 2) {
+                if ((currentShift) && (currentShift.preshift === 'workday')) {
+                  if ((startShift === null) && (endShift === null)) {
+                    delete shift.shiftStart;
+                    delete shift.shiftEnd;
+                    shift.preshift = '';
+                  } else if ((startShift !== null) && (endShift !== null)) {
+                    shift.shiftStart = startShift;
+                    shift.shiftEnd = endShift;
+                    shift.preshift = '';
+                  }
+                  updateCalendarShifts('workday', 'soloday');
+                }
+              }
+            break
+            default:
+            break;
           }
-        }
-        break;
-        case 'clear':
-          preshift.preshift = '';
-        break;
-        default:
-        break;
-      }
-  
-      // Обновляем смену
+
+      // Обновляем или добавляем смену
       if (existingShiftIndex !== -1) {
-        seller.schedule[existingShiftIndex] = preshift;
+        seller.schedule[existingShiftIndex] = shift;
       } else {
-        seller.schedule.push(preshift);
+        seller.schedule.push(shift);
       }
 
       // Обновляем расписание продавца
       updateSellerSchedule(seller);
-      closeShiftTimeModal();
+      recalculateAll();
 
-    } 
-  };
+      closeShiftTimeModal();         
+    }
+  }
 
   const checkCalendarShift = () => {
-    const formattedDate = selectedDay.value.toLocaleDateString('en-CA'); // Используем формат "YYYY-MM-DD"
+    const formattedDate = selectedDay.value ? selectedDay.value.toLocaleDateString('en-CA') : null;
     const sellerWorkDay = sellers.value.filter(seller =>
       seller.schedule.some(shift => shift.date === formattedDate && (shift.preshift === 'workday'))
     ).length;
@@ -592,17 +643,38 @@
   }
 
   const updateCalendarShifts = (fromShift, toShift) => {
-    const formattedDate = selectedDay.value.toLocaleDateString('en-CA'); // Используем формат "YYYY-MM-DD"
-    sellers.value.forEach(seller => {
-      seller.schedule.forEach((shift, index) => {
+  const formattedDate = selectedDay.value.toLocaleDateString('en-CA'); // Используем формат "YYYY-MM-DD"
+  
+  sellers.value.forEach(seller => {
+    seller.schedule.forEach((shift, index) => {
+      // Проверяем смены на совпадение с выбранной датой и типом fromShift
       if (shift.date === formattedDate && shift.preshift === fromShift) {
-        const preshift = { date: formattedDate, preshift: toShift };
-        seller.schedule[index] = preshift;
+        
+        // Копируем текущий shift, чтобы избежать перезаписи данных
+        const updatedShift = { ...shift }; 
+        
+        // Меняем тип смены на toShift
+        updatedShift.preshift = toShift;
+        
+        // Только если в текущей смене есть время, сохраняем его
+        if (shift.shiftStart && shift.shiftEnd) {
+          updatedShift.shiftStart = shift.shiftStart;
+          updatedShift.shiftEnd = shift.shiftEnd;
+        } else {
+          // Если времени нет, удаляем старые значения времени
+          delete updatedShift.shiftStart;
+          delete updatedShift.shiftEnd;
+        }
+
+        // Обновляем конкретную смену в расписании
+        seller.schedule[index] = updatedShift;
+
+        // Обновляем расписание продавца
         updateSellerSchedule(seller);
       }
     });
-  }); 
-  }
+  });
+};
   
   // Сохранение измененного имени продавца
   const saveEditedSeller = async () => {
@@ -615,25 +687,29 @@
   };
   
   const deleteSeller = async () => {
-    if (selectedSellerIndex !== null) {
-      try {
-        const seller = sellers.value[selectedSellerIndex]; // Получаем выбранного продавца
-        await axios.delete(`${process.env.VUE_APP_API_URL}/api/sellers/${seller._id}`); // Удаляем с сервера
-  
-        // Удаляем из локального массива
-        sellers.value.splice(selectedSellerIndex, 1);
-        
-        // Пересчитываем данные или обновляем интерфейс, если нужно
-        recalculateAll();
-        checkCalendarShift();
-  
-        // Закрываем модальное окно
-        closeEditSellerModal();
-      } catch (error) {
-        console.error('Ошибка при удалении продавца:', error);
-      }
+  if (selectedSellerIndex !== null) {
+    const userId = localStorage.getItem('id'); // Получаем userID
+    try {
+      const seller = sellers.value[selectedSellerIndex];
+      
+      // Отправляем запрос на удаление продавца
+      await axios.delete(`${process.env.VUE_APP_API_URL}/api/sellers/${seller._id}`, {
+        data: { userID: userId } // Передаем userID в теле запроса
+      });
+
+      // Удаляем продавца из локального массива только после успешного ответа
+      sellers.value.splice(selectedSellerIndex, 1);
+
+      recalculateAll();
+      checkCalendarShift();
+      closeEditSellerModal();
+
+    } catch (error) {
+      console.error('Ошибка при удалении продавца:', error);
     }
-  };
+  }
+};
+
   
   // Обновление имени продавца на сервере
   const updateSellerName = async (seller) => {
@@ -816,38 +892,6 @@ const changeDayRange = (side, direction) => {
     }
   };
   
-  // Сохранение смены
-  const saveShift = () => {
-    if (shiftStart.value && shiftEnd.value && selectedDay.value && selectedSellerIndex.value !== null) {
-  
-      const formattedDate = selectedDay.value.toLocaleDateString('en-CA'); // Используем формат "YYYY-MM-DD"
-      const shift = { date: formattedDate, shiftStart: `${shiftStart.value.hours}`, shiftEnd: `${shiftEnd.value.hours}` };
-
-      // Получаем текущего продавца
-      const seller = sellers.value[selectedSellerIndex];
-      if (!seller) {
-      console.error('Продавец не найден по данному индексу:', selectedSellerIndex);
-      return;
-    }
-      const existingShiftIndex = seller.schedule.findIndex(s => s.date === formattedDate);
-  
-      // Обновляем или добавляем смену
-      if (existingShiftIndex !== -1) {
-        seller.schedule[existingShiftIndex] = shift;
-      } else {
-        seller.schedule.push(shift);
-      }
-  
-      // Обновляем расписание продавца
-      updateSellerSchedule(seller);
-      recalculateAll();
-      closeShiftTimeModal();
-
-    } else {
-      alert('Пожалуйста, выберите корректное время и дату.');
-    }
-  };
-  
   // Обновление расписания продавца
   const updateSellerSchedule = async (seller) => {
   try {
@@ -855,6 +899,29 @@ const changeDayRange = (side, direction) => {
   } catch (error) {
     console.error('Ошибка при обновлении расписания:', error);
   }
+};
+
+// Расчет общего количества часов за выбранный день для всех продавцов
+const calculateTotalHoursForDay = (selectedDate) => {
+  let totalHours = 0;
+  const targetDate = new Date(selectedDate).setHours(0, 0, 0, 0); // Установка времени на начало дня
+
+  sellers.value.forEach(seller => {
+    seller.schedule.forEach(shift => {
+      const shiftDate = new Date(shift.date).setHours(0, 0, 0, 0); // Установка времени на начало дня
+      if (shiftDate === targetDate) {
+        const start = shift.shiftStart;
+        const end = shift.shiftEnd;
+
+        if (!isNaN(start) && !isNaN(end)) {
+          const hours = (end - start);
+          totalHours += hours;
+        }
+      }
+    });
+  });
+
+  return Math.round(totalHours);
 };
   
   // Расчет общего количества часов за выбранный месяц
@@ -933,14 +1000,16 @@ const changeDayRange = (side, direction) => {
     const currentDateMoscow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Moscow' }));
   
     if (decodedToken.role === 'seller' && day < currentDateMoscow.setHours(0, 0, 0, 0)) {
-      return true;
+      return false;
+      // здесь верни true для блокировки ячейки
     }
   
     const dayInMoscow = new Date(day.toLocaleString('en-US', { timeZone: 'Europe/Moscow' }));
     const isToday = dayInMoscow.toDateString() === currentDateMoscow.toDateString();
   
     if (decodedToken.role === 'seller' && isToday && currentHourMoscow >= 11) {
-      return true;
+      return false;
+      // здесь верни true для блокировки ячейки
     }
   
     return false;
@@ -1017,7 +1086,7 @@ const changeDayRange = (side, direction) => {
     display: inline-block; /* Отображаем как блочный элемент */
     width: 24px; /* Ширина иконки */
     height: 24px; /* Высота иконки */
-    background-image: url('https://www.svgrepo.com/show/152241/exclamation-mark-inside-a-circle.svg');
+    /* background-image: url('https://www.svgrepo.com/show/152241/exclamation-mark-inside-a-circle.svg'); */
     background-size: contain; /* Масштабирование изображения, чтобы оно помещалось внутри */
     background-repeat: no-repeat; /* Отключить повторение изображения */
     position: absolute; /* Позволяет размещать иконку */
