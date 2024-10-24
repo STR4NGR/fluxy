@@ -7,12 +7,17 @@
 </template>
 
 <script>
-
 export default {
   name: 'App',
-
-  data: () => ({
-    //
-  }),
+  watch: {
+    // Следите за изменениями в маршрутах, чтобы обновить заголовок страницы
+    '$route'(to) {
+      document.title = to.meta.title || 'Default Title'; // Установите заголовок по умолчанию
+    }
+  },
+  mounted() {
+    // При первом монтировании компонента установите заголовок
+    document.title = this.$route.meta.title || 'Default Title';
+  }
 }
 </script>
