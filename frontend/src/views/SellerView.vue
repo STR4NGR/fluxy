@@ -113,7 +113,7 @@
           @click="selectShop"  
           class="custom-btn ml-4 font-semibold text-s text-black px-3 py-1 border border-gray-300 rounded-md hover:bg-black hover:text-white transition-colors duration-300"
         >
-          Выбор продавца
+          Выбор магазина
         </button> 
 
         <!-- Кнопка Выйти -->
