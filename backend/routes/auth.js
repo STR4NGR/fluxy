@@ -7,17 +7,17 @@ const router = express.Router();
 // Регистрация пользователя
 router.post('/register', async (req, res) => {
     try {
-        const { email, name, password, role } = req.body; 
+        const { email, name, password } = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: 'Пользователь с таким email уже существует.' });
         }
-        const user = new User({ email, name, password: hashedPassword, role }); 
+        const user = new User({ email, name, password: hashedPassword, role: 'seller' });
         await user.save();
         
         // Generate token
-        const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ id: user._id, email: user.email, role: user.role}, process.env.JWT_SECRET, { expiresIn: '1h' });
         
         res.status(201).json({ message: 'Пользователь успешно зарегистрирован.', errorType: 'success', token });
     } catch (err) {
