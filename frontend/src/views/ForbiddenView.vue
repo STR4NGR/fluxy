@@ -1,15 +1,19 @@
 <template>
-    <div class="container mt-5">
-      <div class="card text-center shadow-sm">
-        <div class="card-body">
-          <h1 class="display-4 text-danger">403</h1>
-          <h2 class="card-title">Доступ запрещен</h2>
-          <p class="card-text">У вас нет прав для доступа к этой странице.</p>
-          <router-link to="/" class="btn btn-primary">Вернуться на главную страницу</router-link>
-        </div>
-      </div>
-    </div>
-  </template>
+  <v-container class="mt-5" fluid>
+    <v-card class="text-center elevation-2">
+      <v-card-title>
+        <h1 class="display-4 red--text">403</h1>
+      </v-card-title>
+      <v-card-text>
+        <h2 class="headline">Доступ запрещен</h2>
+        <p>У вас нет прав для доступа к этой странице.</p>
+      </v-card-text>
+      <v-card-actions class="justify-center">
+        <v-btn color="primary" to="/">Вернуться на главную страницу</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-container>
+</template>
   
   <script>
   export default {

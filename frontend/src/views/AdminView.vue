@@ -43,6 +43,7 @@
   import { ref, onMounted } from 'vue';
   import { useRouter } from 'vue-router';
   import axios from 'axios';
+  import { jwtDecode } from 'jwt-decode';
   
   const router = useRouter();
   const selectedUser = ref(null);
@@ -88,14 +89,34 @@
   };
   
   router.beforeEach((to, from, next) => {
-    const isAuthenticated = !!localStorage.getItem('token');
-    if (!isAuthenticated && to.name !== 'login') {
-      next({ name: 'login' });
-    } else if (isAuthenticated && to.name === 'login') {
-      next({ name: 'admin' });
+  const token = localStorage.getItem('token');
+  const isAuthenticated = !!token;
+
+  if (isAuthenticated) {
+    const decodedToken = jwtDecode(token);
+    const role = decodedToken.role;
+
+    if (to.name === 'login') {
+      if (role === 'admin') {
+        next({ name: 'admin' });
+      } else {
+        next({ name: 'seller' });
+      }
+    } else if (role === 'admin' && to.name === 'admin') {
+      next();
+    } else if (role !== 'admin' && to.name === 'admin') {
+      next({ name: 'forbidden' });
     } else {
       next();
     }
-  });
+  } else {
+    // Если не авторизован и не пытается зайти на login или forbidden, перенаправляем на forbidden
+    if (to.name !== 'login' && to.name !== 'forbidden') {
+      next({ name: 'forbidden' });
+    } else {
+      next();
+    }
+  }
+});
   </script>
   

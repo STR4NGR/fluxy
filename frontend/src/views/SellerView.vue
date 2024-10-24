@@ -365,7 +365,7 @@
   import { computed } from 'vue';
   import { useRouter } from 'vue-router';
   import axios from 'axios';      
-  
+
   const router = useRouter();
   
   const months = [
@@ -1050,12 +1050,30 @@ const calculateTotalHoursForDay = (selectedDate) => {
   const token = localStorage.getItem('token');
   const isAuthenticated = !!token;
 
-  if (!isAuthenticated && to.name !== 'login') {
-    next({ name: 'login' });
-  } else if (isAuthenticated && to.name === 'login') {
-    next({ name: 'admin' });
+  if (isAuthenticated) {
+    const decodedToken = jwtDecode(token);
+    const role = decodedToken.role;
+
+    if (to.name === 'login') {
+      if (role === 'admin') {
+        next({ name: 'admin' });
+      } else {
+        next({ name: 'seller' });
+      }
+    } else if (role === 'admin' && to.name === 'admin') {
+      next();
+    } else if (role !== 'admin' && to.name === 'admin') {
+      next({ name: 'forbidden' });
+    } else {
+      next();
+    }
   } else {
-    next();
+    // Если не авторизован и не пытается зайти на login или forbidden, перенаправляем на forbidden
+    if (to.name !== 'login' && to.name !== 'forbidden') {
+      next({ name: 'forbidden' });
+    } else {
+      next();
+    }
   }
 });
 
