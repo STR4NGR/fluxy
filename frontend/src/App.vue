@@ -12,12 +12,12 @@ export default {
   watch: {
     // Следите за изменениями в маршрутах, чтобы обновить заголовок страницы
     '$route'(to) {
-      document.title = to.meta.title || 'Default Title'; // Установите заголовок по умолчанию
+      document.title = to.meta.title || 'Fluxy'; // Установите заголовок по умолчанию
     }
   },
   mounted() {
     // При первом монтировании компонента установите заголовок
-    document.title = this.$route.meta.title || 'Default Title';
+    document.title = this.$route.meta.title || 'Fluxy';
   }
 }
 </script>
