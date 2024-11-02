@@ -140,7 +140,7 @@
               :key="index"
               :class="getDayClass(day)"
               class="border border-gray-300 py-2"
-              style="width: 100px;">
+              style="height: 100%; width: 110px; min-width: 50px;">
               {{ day.getDate() }}<br>({{ day.toLocaleDateString('ru-RU', { weekday: 'short' }) }})<br>{{ calculateTotalHoursForDay(day) }}
             </th>
           </tr>
@@ -290,7 +290,7 @@
     </v-container>
   
     <v-container>
-      <v-dialog v-model="isShiftTimeModalOpen" persistent max-width="500px">
+      <v-dialog v-model="isShiftTimeModalOpen" persistent max-width="550px" min-width="500px">
         <v-card>
           <v-card-title>Установить время смены</v-card-title>
           <v-card-text>
@@ -869,24 +869,30 @@ const changeDayRange = (side, direction) => {
   };
   
   const incrementHour = (timeType) => {
+    const name = localStorage.getItem('name');
+    let localMax = 23;
+    if (name !== "Склад") localMax = maxTime;
     if (timeType === 'start') {
-      if (shiftStart.value.hours < maxTime) {
+      if (shiftStart.value.hours < localMax) {
         shiftStart.value.hours = (shiftStart.value.hours + 1) % 24;
       }
     } else {
-      if (shiftEnd.value.hours < maxTime) {
+      if (shiftEnd.value.hours < localMax) {
         shiftEnd.value.hours = (shiftEnd.value.hours + 1) % 24;
       }
     }
   };
   
   const decrementHour = (timeType) => {
+    const name = localStorage.getItem('name');
+    let localMin = 0;
+    if (name !== "Склад") localMin = minTime;
     if (timeType === 'start') {
-      if (shiftStart.value.hours > minTime) {
+      if (shiftStart.value.hours > localMin) {
         shiftStart.value.hours = (shiftStart.value.hours - 1 + 24) % 24;
       }
     } else {
-      if (shiftEnd.value.hours > minTime) {
+      if (shiftEnd.value.hours > localMin) {
         shiftEnd.value.hours = (shiftEnd.value.hours - 1 + 24) % 24;
       }
     }
