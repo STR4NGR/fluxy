@@ -1,6 +1,7 @@
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
+import createShop from '../middleware/store.js';
 
-const userSchema = new mongoose.Schema({
+const userSchema = new Schema({
     email: { 
         type: String, 
         required: true, 
@@ -9,7 +10,9 @@ const userSchema = new mongoose.Schema({
     },
     name: { type: String, required: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ['admin', 'seller'], default: 'seller' },
+    role: { type: String, enum: ['admin', 'manager'], default: 'manager' },
 });
 
-module.exports = mongoose.model('User', userSchema);
+userSchema.pre('save', createShop);
+
+export default model('User', userSchema);

@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import AuthPage from '../views/AuthView.vue';
 import AdminPage from '@/views/AdminView.vue';
-import SellerPage from '@/views/SellerView.vue';
+import ManagerPage from '@/views/ManagerView.vue';
 import AboutView from '@/views/AboutView.vue';
 import ForbiddenPage from '@/views/ForbiddenView.vue';
 import { jwtDecode } from 'jwt-decode';
@@ -22,9 +22,9 @@ const routes = [
     component: AdminPage
   },
   {
-    path: '/seller',
-    name: 'seller',
-    component: SellerPage
+    path: '/manager',
+    name: 'manager',
+    component: ManagerPage
   },
   {
     path: '/forbidden',
@@ -55,7 +55,7 @@ router.beforeEach((to, from, next) => {
       if (role === 'admin') {
         next({ name: 'admin' });
       } else {
-        next({ name: 'seller' });
+        next({ name: 'manager' });
       }
     } else if (role === 'admin' && to.name === 'admin') {
       next();

@@ -1,5 +1,5 @@
 <template>
-  <v-container class="mt-5" fluid>
+  <v-container class="d-flex align-center justify-center fill-height" fluid>
     <v-card class="text-center elevation-2">
       <v-card-title>
         <h1 class="display-4 red--text">403</h1>
@@ -33,6 +33,10 @@
   .btn-primary {
     font-size: 1rem;
     padding: 0.6rem 1.5rem;
+  }
+
+  .v-container {
+    background-color: #F6F5F8;
   }
   </style>
   

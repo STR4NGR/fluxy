@@ -1,18 +1,18 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const authRoutes = require('./routes/auth');
-const shiftRoutes = require('./routes/shifts');
-const storeRoutes = require('./routes/stores');
-const sellerRoutes = require('./routes/sellers');
-const usersRoutes = require('./routes/users');
-const initConfig = require('./config/settings');
+import dotenv from 'dotenv';
+import express, { json } from 'express';
+import { connect } from 'mongoose';
+import cors from 'cors';
+import authRoutes from './routes/auth.js';
+import shiftRoutes from './routes/shifts.js';
+import storeRoutes from './routes/stores.js';
+import sellerRoutes from './routes/sellers.js';
+import usersRoutes from './routes/users.js';
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(json());
 
+dotenv.config();
 const mongoURI = process.env.MONGODB_URI;
 
 if (!mongoURI) {
@@ -20,10 +20,9 @@ if (!mongoURI) {
     process.exit(1);
 }
 
-mongoose.connect(mongoURI)
+connect(mongoURI)
     .then(() => {
         console.log('MongoDB connected');
-        initConfig();
     }) 
     .catch(err => console.log(err));
 

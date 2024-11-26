@@ -1,14 +1,12 @@
-const mongoose = require('mongoose');
-const shiftSchema = require('./Shift');
-const resultSchema = require('./Result');
+import { Schema, model } from 'mongoose';
+import shiftSchema from './Shift.js';
+import resultSchema from './Result.js';
 
-const sellerSchema = new mongoose.Schema({
-    userID: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' },
+const sellerSchema = new Schema({
     name: { type: String, required:true },
-    schedule: [shiftSchema],
-    result: resultSchema
+    user_id: { type: String, required:true },
+    schedule: [ shiftSchema ],
+    result: [ resultSchema ]
 });
 
-const Seller = mongoose.model('Seller', sellerSchema);
-
-module.exports = Seller;
+export default model('Seller', sellerSchema);

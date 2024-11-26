@@ -1,8 +1,8 @@
-const express = require('express');
-const Shift = require('../models/Shift');
-const Config = require('../models/Config');
-const auth = require('../middleware/auth');
-const router = express.Router();
+import { Router } from 'express';
+import Shift from '../models/Shift.js';
+import auth from '../middleware/auth.js';
+
+const router = Router();
 
 
 // Создание смены
@@ -29,14 +29,9 @@ router.put('/:id', auth, async(req, res) => {
     try {
         const shiftID = req.params.id;
         const shift = await Shift.findById(shiftID);
-        const config = Config.findOne();
 
         if (!shiftID) { 
             return res.status(404).send('Shift not found');
-        }
-
-        if (!config) {
-            return res.status(404).send('Config not found');
         }
 
         if (req.user.role !== 'admin') {
@@ -47,9 +42,6 @@ router.put('/:id', auth, async(req, res) => {
                 return res.status(403).send('You cannot modify shift from previous days');
             }
 
-            if (currentDate.getHours() > config.shiftModificationHour) {
-                return res.status(403).send('You cannot modify shift after ' + config.shiftModificationHour);
-            }
         }
 
         Object.assign(shift, req.body);
@@ -68,4 +60,4 @@ router.get('/', auth, async (req, res) => {
     res.json(shifts);
 })
 
-module.exports = router;
+export default router;

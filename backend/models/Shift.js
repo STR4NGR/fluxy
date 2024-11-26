@@ -1,10 +1,14 @@
-const mongoose = require('mongoose');
+import { Schema } from 'mongoose';
+import overtimeSchema from './Overtime.js';
 
-const shiftSchema = new mongoose.Schema({
+const shiftSchema = new Schema({
     date: { type: String, required: true},
-    shiftStart: { type: String},
-    shiftEnd: { type: String},
-    preshift: { type: String, enum: ['holiday', 'workday', 'soloday']} 
+    pre_shift: { type: String, enum: ['holiday', 'workday', 'soloday']},
+    start_time: { type: String},
+    end_time: { type: String},
+    overtime: [ overtimeSchema ],
+    store_id: { type: Schema.Types.ObjectId, required: true, ref: 'Store.js' },
+
 });
 
-module.exports = shiftSchema;
+export default shiftSchema;

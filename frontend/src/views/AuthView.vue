@@ -1,63 +1,61 @@
 <template>
-  <div class="flex justify-center items-center min-h-screen bg-gray-100">
-    <div class="w-full max-w-md bg-white shadow-lg rounded-lg p-6">
-      <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">
-        Добро пожаловать на <span class="text-blue-500">Fluxy</span>
-      </h2>
+  <v-container class="d-flex align-center justify-center fill-height" fluid>
+    <v-card max-width="600" class="pa-6">
+      <v-card-title class="text-h4 font-weight-bold text-center">
+        Добро пожаловать на <span class="text-primary">Fluxy</span>
+      </v-card-title>
 
-      <form @submit.prevent="isRegistering ? register() : login()">
-        <div class="mb-4">
-          <input 
-            type="email" 
-            v-model="email" 
-            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
-            id="email" 
-            required 
-            placeholder="E-Mail"
-          />
-        </div>
-        
-        <div class="mb-4" v-if="isRegistering">
-          <input 
-            type="text" 
-            v-model="name" 
-            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
-            id="name" 
-            required 
-            placeholder="Имя"
-          />
-        </div>
-        
-        <div class="mb-4">
-          <input 
-            type="password" 
-            v-model="password" 
-            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
-            id="password" 
-            required 
-            placeholder="Пароль"
-          />
-        </div>
-        
-        <div class="mb-4" v-if="isRegistering">
-          <input 
-            type="password" 
-            v-model="confirmPassword" 
-            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
-            id="confirmPassword" 
-            required 
-            placeholder="Подтвердите пароль"
-          />
-        </div>
+      <v-form @submit.prevent="isRegistering ? register() : login()">
+        <v-text-field
+          class="custom-text-field"
+          v-model="email"
+          label="E-Mail"
+          type="email"
+          required
+          variant="outlined"
+          prepend-inner-icon="mdi-email-outline"
+        ></v-text-field>
 
-        <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors duration-300">
+        <v-text-field
+          v-if="isRegistering"
+          v-model="name"
+          label="Имя"
+          type="text"
+          required
+          variant="outlined"
+        ></v-text-field>
+
+        <v-text-field
+          v-model="password"
+          label="Пароль"
+          type="password"
+          required
+          variant="outlined"
+          prepend-inner-icon="mdi-lock-outline"
+        ></v-text-field>
+
+        <v-text-field
+          v-if="isRegistering"
+          v-model="confirmPassword"
+          label="Подтвердите пароль"
+          type="password"
+          required
+          variant="outlined"
+          prepend-inner-icon="mdi-lock-outline"
+        ></v-text-field>
+
+        <v-btn
+          class="mt-4 custom-btn"
+          type="submit"
+          block
+        >
           {{ isRegistering ? 'Зарегистрироваться' : 'Войти' }}
-        </button>
-      </form>
+        </v-btn>
+      </v-form>
 
       <AlertForm v-if="error" :message="error" :type="errorType" class="mt-4" />
-    </div>
-  </div>
+    </v-card>
+  </v-container>
 </template>
   
 <script>
@@ -124,8 +122,8 @@ export default {
           const role = decodedToken.role;
           if (role == 'admin') {
             this.$router.push({ name: 'admin' });
-          } else if (role == 'seller') {
-            this.$router.push({ name: 'seller' });
+          } else if (role == 'manager') {
+            this.$router.push({ name: 'manager' });
           } else {
             this.error = "role is: " + data.role;
           }
@@ -159,7 +157,7 @@ export default {
         this.errorType = data.errorType;
 
         if (response.ok) {
-          this.$router.push({ name: 'seller' });
+          this.$router.push({ name: 'manager' });
           localStorage.setItem('token', data.token);
           localStorage.setItem('name', this.name);
           localStorage.setItem('id', decodedToken.id);
@@ -181,6 +179,10 @@ export default {
 </script>
 
 <style scoped>
+.v-container {
+  background-color: #F6F5F8;
+}
+
 .login-form {
   max-width: 400px;
   margin: auto;
@@ -208,12 +210,44 @@ h2 {
   font-size: 0.9rem;
 }
 
-.btn-primary {
-  font-size: 1rem;
-  padding: 0.6rem 0;
+.custom-btn {
+    font-size: 1rem;
+    padding: 0.6rem 0;
+    background-color: #836AF9 !important; /* Если нужно изменить фон */
+    color: #ffffff !important;
+}
+
+/* Для фокуса на компоненте */
+.custom-text-field >>> .v-input--is-focused .v-input__control {
+  border: 2px solid #836AF9 !important; /* Цвет обводки при фокусе */
+}
+
+/* Для текста в фокусе */
+.custom-text-field >>> .v-input--is-focused .v-text-field__control input {
+  border-color: #836AF9 !important; /* Цвет обводки при фокусе */
+}
+
+/* Основной фон компонента */
+.custom-text-field >>> .v-input__control {
+  background-color: #ffffff !important; /* Цвет фона */
+  border-radius: 8px !important; /* Закругление углов */
+}
+
+/* Цвет текста */
+.custom-text-field >>> .v-text-field__control input {
+  color: #333 !important;
+}
+
+/* Общие отступы */
+.custom-text-field >>> .v-input__slot {
+  padding: 12px !important;
 }
 
 .text-danger {
   font-size: 0.9rem;
+}
+
+.text-primary {
+  color: #836AF9 !important;
 }
 </style>

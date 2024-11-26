@@ -1,7 +1,8 @@
-const express = require('express');
-const Store = require('../models/Store');
-const auth = require('../middleware/auth');
-const router = express.Router();
+import { Router } from 'express';
+import Store from '../models/Store.js';
+import auth from '../middleware/auth.js';
+
+const router = Router();
 
 // Создание магазина
 router.post('/', auth, async (req, res) => {
@@ -31,4 +32,4 @@ router.get('/', auth, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

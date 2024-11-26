@@ -1,6 +1,7 @@
-const express = require('express');
-const Seller = require('../models/Seller');
-const router = express.Router();
+import { Router } from 'express';
+import Seller from '../models/Seller.js';
+
+const router = Router();
 
 // Создание нового продавца
 router.post('/', async (req, res) => {
@@ -13,14 +14,26 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Получение всех продавцов
+// Получение всех продавцов из всех магазинов и из определенного при указании query параметра
 router.get('/', async (req, res) => {
-  const userId = req.query.userId;
   try {
-    const sellers = await Seller.find({ userID: userId });
+    const { userID } = req.query;
+    
+    if (!userID) {
+      const sellers = await Seller.find();
+      return res.json(sellers);
+    }
+
+    const sellers = await Seller.find({ user_id: userID }).populate("user_id");
+
+    if (!sellers || sellers.length === 0) {
+      return res.json([]);
+    }
+
     res.json(sellers);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);  // Логирование ошибки на сервере
+    res.status(500).json({ message: 'Ошибка при обработке запроса' });
   }
 });
 
@@ -73,4 +86,4 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
