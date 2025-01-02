@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import Seller from '../models/Seller.js';
+import User from '../models/User.js';
 
 const router = Router();
 
@@ -24,7 +25,12 @@ router.get('/', async (req, res) => {
       return res.json(sellers);
     }
 
-    const sellers = await Seller.find({ user_id: userID }).populate("user_id");
+    const sellers = await Seller.find({ user_id: userID });
+
+    for (const seller of sellers) {
+        const user = await User.findOne({ user_id: seller.user_id });
+        seller.userDetails = user; // Добавляем данные о пользователе вручную
+    }
 
     if (!sellers || sellers.length === 0) {
       return res.json([]);
